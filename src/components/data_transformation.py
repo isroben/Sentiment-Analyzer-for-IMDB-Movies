@@ -82,7 +82,7 @@ class Vectorizer:
         self.model.build_vocab(sentences)
         self.model.train(
             sentences,
-            total_examples=self.model.coupus_count,
+            total_examples=self.model.corpus_count,
             epochs = self.epochs
         )
 

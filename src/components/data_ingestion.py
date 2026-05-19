@@ -11,10 +11,10 @@ logger = get_logger(__name__)
 
 @dataclass
 class DataIngestionConfig:
-    source_data_path: str = r"data/"
-    train_data_path: str = os.path.join('data/processed', 'train.csv')
-    test_data_path: str = os.path.join('data/processed', 'test.csv')
-    raw_data_path: str = os.path.join('data/raw', 'data.csv')
+    source_data_path: str = r'/home/roben/Codes/Sentiment Analysis/data/IMDB_Dataset.csv'
+    train_data_path: str = os.path.join('src/data/processed', 'train.csv')
+    test_data_path: str = os.path.join('src/data/processed', 'test.csv')
+    raw_data_path: str = os.path.join('src/data/raw', 'data.csv')
 
 
 class DataIngestion:
@@ -43,7 +43,7 @@ class DataIngestion:
 
             os.makedirs(os.path.dirname(self.config.train_data_path), exist_ok=True)
             train_set.to_csv(self.config.train_data_path, index=False, header=True)
-            test_set.to_csv(self.config.test_data_path, index=False, header=False)
+            test_set.to_csv(self.config.test_data_path, index=False, header=True)
 
             logger.info("Data ingestion completed.")
 
