@@ -31,12 +31,17 @@ class DataIngestion:
             dataset = pd.read_csv(self.config.source_data_path)
             logger.info("Dataset loaded successfully.")
 
-            os.makedirs(os.path.dirname(self.config.train_data_path), exist_ok=True)
+            dataset.drop_duplicates(inplace=True)
+            dataset.dropna(subset=['review', 'sentiment'], inplace=True)
+
+            os.makedirs(os.path.dirname(self.config.raw_data_path), exist_ok=True)
+            dataset.to_csv(self.config.raw_data_path, index=False)
+            logger.info(f"Raw data saved to: {self.config.raw_data_path}")
 
             train_set, test_set = train_test_split(dataset, test_size=0.2, random_state=42)
+            logger.info(f"Train size: {len(train_set)} | Test size: {len(test_set)}")
 
-            logger.info("Train-Test split completed.")
-
+            os.makedirs(os.path.dirname(self.config.train_data_path), exist_ok=True)
             train_set.to_csv(self.config.train_data_path, index=False, header=True)
             test_set.to_csv(self.config.test_data_path, index=False, header=False)
 
