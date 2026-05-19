@@ -1,19 +1,27 @@
+import pandas as pd
 import numpy as np
 import re
+import os
+import sys
 
+from dataclasses import dataclass
 from nltk.corpus import stopwords
-from nltk import PorterStremmer, sent_tokenize
+from nltk import PorterStemmer, sent_tokenize
 from gensim.models import Word2Vec, KeyedVectors
 from tqdm import tqdm
 from gensim.utils import simple_preprocess
 
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 
 from src.utils.exception import CustomException
 from src.utils.logger import get_logger
+from src.utils.utils import save_object
 
+@dataclass
+class DataTransformationConfig:
+    Vectorizer_path: str = os.path.join('artifacts', 'vectorizer.pkl')
+    encoder_path: str = os.path.join('artifacts', 'encoder.pkl')
 
 
 logger = get_logger(__name__)
@@ -23,7 +31,7 @@ class TextCleaner:
 
     def __init__(self):
         self.sw_list = stopwords.words('english')
-        self.ps = PorterStremmer()
+        self.ps = PorterStemmer()
 
     def remove_html_tags(self, text):
         return re.sub(re.compile('<.*?>'), '', text)
@@ -61,7 +69,6 @@ class Vectorizer:
         for doc in texts:
             for sent in sent_tokenize(doc):
                 story.append(simple_preprocess(sent))
-
         return story
     
     def fit(self, X_train_texts):
@@ -97,20 +104,43 @@ class Vectorizer:
 
 
 
-def run_transformation(data):
-    logger.info("Text transformation process started.")
 
-    cleaner = TextCleaner()
+class DataTransformation:
+    def __init__(self):
+        self.config = DataTransformationConfig()
 
-    data['review'] = data['review'].apply(cleaner.clean)
+    def initiateDataTransformation(self, train_path, test_path):
+        logger.info("Data transformation started.")
 
-    encoder = LabelEncoder()
-    y = encoder.fit_transform(data['sentiment'])
+        try:
+            train_df = pd.read_csv(train_path)
+            test_df = pd.read_csv(test_path)
+            logger.info(f"Train: {train_df.shape} | Test: {test_df.shape}")
 
-    X_train, X_test, y_train, y_test = train_test_split(data['review'].values, y, test_size=0.2, random_state=42)
+            cleaner = TextCleaner()
+            train_df['review'] = train_df['review'].apply(cleaner.clean)
+            test_df['review'] = test_df['review'].apply(cleaner.clean)
+            logger.info("Text cleaning complete.")
 
-    vectorizer = Vectorizer()
-    X_train = vectorizer.fit_transform(X_train)
-    X_test = vectorizer.transform(X_test)
+            
+            encoder = LabelEncoder()
+            y_train = encoder.fit_transform(train_df['sentiment'])
+            y_test = encoder.transform(test_df['sentiment'])
 
-    return X_train, X_test, y_train, y_test, vectorizer, encoder
+
+            vectorizer = Vectorizer()
+            X_train = vectorizer.fit_transform(train_df['review'].values)
+            X_test = vectorizer.transform(test_df['review'].values)
+            logger.info(f"Vectorization complete. X_train: {X_train.shape} | X_test: {X_test.shape}")
+
+            os.makedirs('artifacts', exist_ok=True)
+            save_object(self.config.Vectorizer_path, vectorizer)
+            save_object(self.config.encoder_path, encoder)
+            logger.info(f"Vectorizer saved to: {self.config.Vectorizer_path}")
+
+            logger.info("Data Transformation completed.")
+            return X_train, X_test, y_train, y_test
+        
+        except Exception as e:
+            raise CustomException(e, sys)
+
