@@ -26,6 +26,7 @@ list_of_files = [
     'templates/index.html',
     'templates/home.html',
     'setup.py',
+    'requirements.txt'
 ]
 
 for filepath in list_of_files:
