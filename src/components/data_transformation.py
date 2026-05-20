@@ -56,12 +56,11 @@ class TextCleaner:
     
 
 class Vectorizer:
-    def __init__(self, window=10, min_count=2, vector_size=100, epochs=10):
+    def __init__(self, window=5, min_count=2, vector_size=100):
         self.window = window
         self.min_count = min_count
         self.vector_size = vector_size
-        self.epochs = epochs
-        self.model = None
+        # self.model = None
 
     
     def _build_sentences(self, texts):
@@ -69,6 +68,7 @@ class Vectorizer:
         for doc in texts:
             for sent in sent_tokenize(doc):
                 story.append(simple_preprocess(sent))
+            logger.info("Word Tokenization completed!")
         return story
     
     def fit(self, X_train_texts):
@@ -83,13 +83,13 @@ class Vectorizer:
         self.model.train(
             sentences,
             total_examples=self.model.corpus_count,
-            epochs = self.epochs
+            epochs = self.model.epochs
         )
-
         return self
     
     def _document_vector(self, doc):
-        tokens = [w for w in doc.split() if w in self.model.wv.index_to_key]
+        tokens = [w for w in doc.split() if w in self.model.wv.key_to_index]
+        logger.info(f"{tokens}")
         if not tokens:
             return np.zeros(self.model.vector_size)
         return  np.mean(self.model.wv[tokens], axis=0)
@@ -126,10 +126,12 @@ class DataTransformation:
             encoder = LabelEncoder()
             y_train = encoder.fit_transform(train_df['sentiment'])
             y_test = encoder.transform(test_df['sentiment'])
+            logger.info("Label encoded successfully.")
 
 
             vectorizer = Vectorizer()
             X_train = vectorizer.fit_transform(train_df['review'].values)
+            logger.info("Vectorization completed in training data.")
             X_test = vectorizer.transform(test_df['review'].values)
             logger.info(f"Vectorization complete. X_train: {X_train.shape} | X_test: {X_test.shape}")
 

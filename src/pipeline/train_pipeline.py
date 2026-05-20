@@ -23,10 +23,10 @@ def training_pipeline():
         logger.info("Data ingestion completed.")
 
         # ── Step 2: Data Transformation ───────────────────────────────────────
+        logger.info(f"{train_data_path} | {test_data_path}")
         transform = DataTransformation()
         X_train, X_test, y_train, y_test = transform.initiateDataTransformation(
-            train_data_path, test_data_path
-        )
+            train_data_path, test_data_path)
         logger.info(f"Data transformation completed. X_train: {X_train.shape} | X_test: {X_test.shape}")
 
         # ── Step 3: Model Training ─────────────────────────────────────────────
