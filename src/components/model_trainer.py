@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from src.utils.exception import CustomException
 from src.utils.logger import get_logger
 from src.utils.utils import save_object
-from src.components.model_evaluation import evaluate_models
+from src.components.model_evaluation import evaluate_model
 
 from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
 
@@ -78,6 +78,6 @@ class ModelTrainer:
                 }
             }
 
-            model_report = evaluate_models()
+            report, trained_models, best_model_name = evaluate_model()
         except Exception as e:
             raise CustomException(e, sys)
