@@ -26,8 +26,9 @@ def load_obj(file_path):
     
     try:
         with open(file_path, 'rb') as file_obj:
-            return dill.load(file_obj)
-        logger.info(f"Object loaded successfully at: {file_path}")
+            obj = dill.load(file_obj)
+        logger.info(f"Object loaded successfully from: {file_path}")
+        return obj
 
     except Exception as e:
         raise CustomException(e, sys)

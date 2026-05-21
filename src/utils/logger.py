@@ -25,9 +25,6 @@ def get_logger(name: str):
 
     # Console handler
     console_handler = logging.StreamHandler()
-    console_handler.setFormatter(logging.Formatter(
-        "%(levelname)s: %(message)s"
-    ))
 
     formatter = logging.Formatter(
         "[ %(asctime)s ] %(lineno)d %(name)s - %(levelname)s - %(message)s"

@@ -5,3 +5,5 @@ nltk
 gensim
 tqdm
 dill
+fastapi
+pydantic
