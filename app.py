@@ -46,7 +46,11 @@ def predict():
     if not review_text.strip():
         return jsonify({'error': 'Review text is empty.'}), 400
 
-    result = pipeline.predict(review_text)
+    try:
+        result = pipeline.predict(review_text)
+    except Exception as e:
+        logger.error(f"Prediction failed: {e}")
+        return jsonify({'error': 'Prediction failed. Please try again.'}), 500
 
     return jsonify({
         'prediction': result['label'],

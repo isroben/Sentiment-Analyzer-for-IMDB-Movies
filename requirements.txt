@@ -7,3 +7,4 @@ tqdm
 dill
 fastapi
 pydantic
+flask

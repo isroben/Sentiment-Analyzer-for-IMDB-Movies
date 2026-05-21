@@ -3,195 +3,578 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movie Review Classifier</title>
+    <title>Sentiment Analyzer — IMDB Movie Reviews</title>
+    <meta name="description" content="AI-powered sentiment analysis for movie reviews. Paste any IMDB review and get instant positive/negative classification with confidence scores.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
-            font-family: Arial, Helvetica, sans-serif;
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        body{
-            background:#121212;
-            color:white;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            min-height:100vh;
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-input: #1a1a25;
+            --bg-input-focus: #1e1e2a;
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --border-focus: rgba(99, 102, 241, 0.5);
+            --text-primary: #f0f0f5;
+            --text-secondary: #8888a0;
+            --text-muted: #55556a;
+            --accent-indigo: #6366f1;
+            --accent-indigo-glow: rgba(99, 102, 241, 0.25);
+            --positive: #10b981;
+            --positive-bg: rgba(16, 185, 129, 0.08);
+            --positive-glow: rgba(16, 185, 129, 0.3);
+            --negative: #ef4444;
+            --negative-bg: rgba(239, 68, 68, 0.08);
+            --negative-glow: rgba(239, 68, 68, 0.3);
+            --error: #f97316;
+            --error-bg: rgba(249, 115, 22, 0.08);
         }
 
-        .container{
-            width:90%;
-            max-width:700px;
-            background:#1e1e1e;
-            padding:30px;
-            border-radius:15px;
-            box-shadow:0 0 20px rgba(0,0,0,0.4);
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            overflow-x: hidden;
         }
 
-        h1{
-            text-align:center;
-            margin-bottom:20px;
-            color:#00d4ff;
+        /* ── Animated background orbs ── */
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::before {
+            width: 500px;
+            height: 500px;
+            background: var(--accent-indigo);
+            top: -120px;
+            right: -100px;
+            animation: float 12s ease-in-out infinite;
+        }
+        body::after {
+            width: 400px;
+            height: 400px;
+            background: #8b5cf6;
+            bottom: -80px;
+            left: -80px;
+            animation: float 15s ease-in-out infinite reverse;
         }
 
-        textarea{
-            width:100%;
-            height:180px;
-            padding:15px;
-            border:none;
-            outline:none;
-            border-radius:10px;
-            resize:none;
-            font-size:16px;
-            margin-bottom:20px;
-            background:#2c2c2c;
-            color:white;
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -20px) scale(1.05); }
+            66% { transform: translate(-20px, 15px) scale(0.95); }
         }
 
-        button{
-            width:100%;
-            padding:15px;
-            border:none;
-            border-radius:10px;
-            background:#00d4ff;
-            color:black;
-            font-size:18px;
-            font-weight:bold;
-            cursor:pointer;
-            transition:0.3s;
+        /* ── Main card ── */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 680px;
         }
 
-        button:hover{
-            background:#00b4d8;
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 40px 36px 36px;
+            backdrop-filter: blur(20px);
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.03) inset,
+                0 20px 60px rgba(0,0,0,0.5);
         }
 
-        .result{
-            margin-top:25px;
-            padding:20px;
-            border-radius:10px;
-            background:#2c2c2c;
-            text-align:center;
-            display:none;
+        /* ── Header ── */
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .header .icon {
+            font-size: 42px;
+            margin-bottom: 12px;
+            display: block;
+            animation: pulse-icon 3s ease-in-out infinite;
+        }
+        @keyframes pulse-icon {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-indigo));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        .header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 400;
+            line-height: 1.5;
         }
 
-        .positive{
-            color:#00ff88;
-            font-size:24px;
-            font-weight:bold;
+        /* ── Textarea ── */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+        textarea {
+            width: 100%;
+            height: 170px;
+            padding: 16px 18px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+        textarea::placeholder {
+            color: var(--text-muted);
+        }
+        textarea:focus {
+            border-color: var(--border-focus);
+            background: var(--bg-input-focus);
+            box-shadow: 0 0 0 3px var(--accent-indigo-glow);
+        }
+        .char-count {
+            position: absolute;
+            bottom: 12px;
+            right: 14px;
+            font-size: 11px;
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: color 0.2s;
+        }
+        .char-count.warn {
+            color: var(--error);
         }
 
-        .negative{
-            color:#ff4d4d;
-            font-size:24px;
-            font-weight:bold;
+        /* ── Button ── */
+        .btn-predict {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent-indigo), #8b5cf6);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.3px;
+        }
+        .btn-predict:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 30px var(--accent-indigo-glow);
+        }
+        .btn-predict:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        .btn-predict:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-predict .btn-text {
+            transition: opacity 0.2s;
+        }
+        .btn-predict.loading .btn-text {
+            opacity: 0;
+        }
+        .btn-predict .spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 22px;
+            height: 22px;
+            border: 2.5px solid rgba(255,255,255,0.25);
+            border-top-color: white;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s;
+            animation: spin 0.7s linear infinite;
+        }
+        .btn-predict.loading .spinner {
+            opacity: 1;
+        }
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
-        .loading{
-            margin-top:15px;
-            text-align:center;
-            display:none;
+        /* ── Result box ── */
+        .result-box {
+            margin-top: 24px;
+            border-radius: 16px;
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .result-box.visible {
+            max-height: 400px;
+            opacity: 1;
+            padding: 28px 24px;
+        }
+        .result-box.positive-result {
+            background: var(--positive-bg);
+            border: 1px solid rgba(16, 185, 129, 0.15);
+        }
+        .result-box.negative-result {
+            background: var(--negative-bg);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+        }
+        .result-box.error-result {
+            background: var(--error-bg);
+            border: 1px solid rgba(249, 115, 22, 0.15);
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .result-icon {
+            font-size: 32px;
+            line-height: 1;
+        }
+        .result-label {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        .positive-result .result-label { color: var(--positive); }
+        .negative-result .result-label { color: var(--negative); }
+        .error-result .result-label { color: var(--error); font-size: 16px; font-weight: 500; }
+
+        /* ── Confidence bar ── */
+        .confidence-section {
+            margin-top: 4px;
+        }
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .confidence-value {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        .confidence-bar-track {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+        .confidence-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            width: 0%;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .positive-result .confidence-bar-fill {
+            background: linear-gradient(90deg, var(--positive), #34d399);
+            box-shadow: 0 0 12px var(--positive-glow);
+        }
+        .negative-result .confidence-bar-fill {
+            background: linear-gradient(90deg, var(--negative), #f87171);
+            box-shadow: 0 0 12px var(--negative-glow);
+        }
+
+        /* ── Examples ── */
+        .examples {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-subtle);
+        }
+        .examples-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 10px;
+        }
+        .example-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .example-chip {
+            padding: 7px 14px;
+            border-radius: 99px;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .example-chip:hover {
+            border-color: var(--border-focus);
+            color: var(--text-primary);
+            background: var(--bg-input-focus);
+        }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            margin-top: 28px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .footer a {
+            color: var(--accent-indigo);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 520px) {
+            .card {
+                padding: 28px 20px 24px;
+                border-radius: 16px;
+            }
+            .header h1 { font-size: 22px; }
+            textarea { height: 140px; font-size: 14px; }
         }
     </style>
 </head>
 
 <body>
 
-    <div class="container">
+    <div class="app-container">
+        <div class="card">
 
-        <h1>🎬 Movie Review Sentiment Analysis</h1>
+            <!-- Header -->
+            <div class="header">
+                <span class="icon">🎬</span>
+                <h1>Movie Review Sentiment Analyzer</h1>
+                <p>Paste any movie review and our AI model will classify it as positive or negative with a confidence score.</p>
+            </div>
 
-        <textarea 
-            id="reviewInput" 
-            placeholder="Write your movie review here..."
-        ></textarea>
+            <!-- Input -->
+            <div class="input-group">
+                <label for="reviewInput">Your Review</label>
+                <textarea
+                    id="reviewInput"
+                    placeholder="e.g. This film was a masterpiece of storytelling. The performances were incredible and the cinematography was breathtaking..."
+                    maxlength="5000"
+                ></textarea>
+                <span class="char-count" id="charCount">0 / 5000</span>
+            </div>
 
-        <button onclick="predictReview()">
-            Predict Sentiment
-        </button>
+            <!-- Predict Button -->
+            <button class="btn-predict" id="predictBtn" onclick="predictSentiment()">
+                <span class="btn-text">Analyze Sentiment</span>
+                <span class="spinner"></span>
+            </button>
 
-        <div class="loading" id="loading">
-            Predicting...
+            <!-- Result -->
+            <div class="result-box" id="resultBox">
+                <div class="result-header">
+                    <span class="result-icon" id="resultIcon"></span>
+                    <span class="result-label" id="resultLabel"></span>
+                </div>
+                <div class="confidence-section" id="confidenceSection">
+                    <div class="confidence-label">
+                        <span>Model Confidence</span>
+                        <span class="confidence-value" id="confidenceValue">—</span>
+                    </div>
+                    <div class="confidence-bar-track">
+                        <div class="confidence-bar-fill" id="confidenceBar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example chips -->
+            <div class="examples">
+                <div class="examples-title">Try an example</div>
+                <div class="example-chips">
+                    <button class="example-chip" onclick="fillExample(this)">This movie was absolutely brilliant! A true masterpiece.</button>
+                    <button class="example-chip" onclick="fillExample(this)">Terrible film. Boring plot and bad acting throughout.</button>
+                    <button class="example-chip" onclick="fillExample(this)">A visually stunning film with a heartfelt story.</button>
+                </div>
+            </div>
+
         </div>
 
-        <div class="result" id="resultBox">
-            <h2>Prediction Result</h2>
-
-            <p id="predictionText"></p>
-
-            <br>
-
-            <p id="confidenceText"></p>
+        <div class="footer">
+            Powered by ML &middot; Built with Flask &amp; scikit-learn
         </div>
-
     </div>
 
     <script>
+        // ── DOM refs ──
+        const reviewInput     = document.getElementById('reviewInput');
+        const charCount       = document.getElementById('charCount');
+        const predictBtn      = document.getElementById('predictBtn');
+        const resultBox       = document.getElementById('resultBox');
+        const resultIcon      = document.getElementById('resultIcon');
+        const resultLabel     = document.getElementById('resultLabel');
+        const confidenceSection = document.getElementById('confidenceSection');
+        const confidenceValue = document.getElementById('confidenceValue');
+        const confidenceBar   = document.getElementById('confidenceBar');
 
-        async function predictReview(){
+        // ── Character counter ──
+        reviewInput.addEventListener('input', () => {
+            const len = reviewInput.value.length;
+            charCount.textContent = `${len} / 5000`;
+            charCount.classList.toggle('warn', len > 4500);
+        });
 
-            const review = document.getElementById("reviewInput").value;
+        // ── Fill example text ──
+        function fillExample(chip) {
+            reviewInput.value = chip.textContent;
+            reviewInput.dispatchEvent(new Event('input'));
+            reviewInput.focus();
+        }
 
-            const resultBox = document.getElementById("resultBox");
-            const predictionText = document.getElementById("predictionText");
-            const confidenceText = document.getElementById("confidenceText");
-            const loading = document.getElementById("loading");
+        // ── Main prediction function ──
+        async function predictSentiment() {
+            const review = reviewInput.value.trim();
 
-            if(review.trim() === ""){
-                alert("Please enter a review");
+            if (!review) {
+                showError('Please enter a movie review to analyze.');
                 return;
             }
 
-            loading.style.display = "block";
-            resultBox.style.display = "none";
+            // Set loading state
+            predictBtn.classList.add('loading');
+            predictBtn.disabled = true;
+            hideResult();
 
-            try{
-
-                // CHANGE THIS URL TO YOUR API ENDPOINT
-                const response = await fetch("http://127.0.0.1:5000/predict", {
-
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        review: review
-                    })
-
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ review: review })
                 });
 
                 const data = await response.json();
 
-                loading.style.display = "none";
-                resultBox.style.display = "block";
-
-                predictionText.innerText = data.prediction;
-
-                confidenceText.innerText = 
-                    "Confidence: " + data.confidence + "%";
-
-                if(data.prediction.toLowerCase() === "positive"){
-                    predictionText.className = "positive";
-                }
-                else{
-                    predictionText.className = "negative";
+                if (!response.ok) {
+                    throw new Error(data.error || `Server error (${response.status})`);
                 }
 
-            }
-            catch(error){
+                showResult(data);
 
-                loading.style.display = "none";
-
-                alert("Error connecting to API");
-
-                console.log(error);
+            } catch (err) {
+                console.error('Prediction error:', err);
+                showError(
+                    err.message === 'Failed to fetch'
+                        ? 'Cannot connect to the server. Make sure it is running.'
+                        : err.message
+                );
+            } finally {
+                predictBtn.classList.remove('loading');
+                predictBtn.disabled = false;
             }
         }
 
+        // ── Display result ──
+        function showResult(data) {
+            const isPositive = data.prediction.toLowerCase() === 'positive';
+
+            resultBox.className = 'result-box';
+            resultBox.classList.add(isPositive ? 'positive-result' : 'negative-result');
+
+            resultIcon.textContent = isPositive ? '🟢' : '🔴';
+            resultLabel.textContent = isPositive ? 'Positive Sentiment' : 'Negative Sentiment';
+
+            if (data.confidence !== null && data.confidence !== undefined) {
+                confidenceSection.style.display = 'block';
+                confidenceValue.textContent = data.confidence + '%';
+
+                // Animate confidence bar after a tiny delay
+                setTimeout(() => {
+                    confidenceBar.style.width = data.confidence + '%';
+                }, 80);
+            } else {
+                confidenceSection.style.display = 'none';
+            }
+
+            // Trigger the reveal
+            requestAnimationFrame(() => {
+                resultBox.classList.add('visible');
+            });
+        }
+
+        // ── Display error ──
+        function showError(message) {
+            resultBox.className = 'result-box error-result';
+
+            resultIcon.textContent = '⚠️';
+            resultLabel.textContent = message;
+            confidenceSection.style.display = 'none';
+
+            requestAnimationFrame(() => {
+                resultBox.classList.add('visible');
+            });
+        }
+
+        // ── Hide result ──
+        function hideResult() {
+            resultBox.classList.remove('visible');
+            confidenceBar.style.width = '0%';
+        }
+
+        // ── Allow Ctrl+Enter to submit ──
+        reviewInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                predictSentiment();
+            }
+        });
     </script>
 
 </body>
